@@ -1,0 +1,217 @@
+#include "HashTableLin.h"
+#include <iostream>
+#include <cmath> 
+#include <random>
+using namespace std;
+
+/*
+int HashTableLin::roundUp(int maxNum, double load) {
+    int size;
+    if (fmod(maxNum, load) == 0) {
+        size = maxNum / load;
+    }
+    else {
+        size = maxNum / load + 1;
+    }
+    return size;
+}
+*/
+
+//copied code 
+bool HashTableLin::isPrime(int n) { 
+/*
+runtime: big theta of n runtime of for 
+space: constant
+*/
+    
+    if (n == 0 || n == 1) {
+        return false;
+    }
+
+    for (int i=2; i <= n/2; i++) {
+        if (n % i == 0) {
+            return false;
+        }
+    }
+    return true; 
+}
+
+HashTableLin::HashTableLin(int maxNum, double load)
+/*
+Run time: n 
+Space: size 
+*/
+{
+    // TODO 
+    maxLoad = load; 
+    numKeys = 0;
+    probes = 0; 
+
+    size = ceil(double(maxNum)/load); 
+    //std::cout << "Size after round is: " << size << std::endl;
+    while (isPrime(size) == false) {
+        size++; 
+    }
+    
+    //std::cout << "Size after prime is: "<<size << std::endl; 
+    for (int i = 0; i < size; i++) {
+        table.push_back(0); 
+    }
+}
+
+int HashTableLin::Probe(int n) //helper function for insert 
+/*
+runtime: avg is 1; WC # of elements  
+space: constant 
+*/
+{
+    // TODO, change following code after completing this function
+    int probe = n % size;
+    int succProbes = 1; 
+    while (table[probe]!=0) { //probe must wrap around 
+        if (table[probe] == n) { //finds 
+            return -1; 
+        }
+        else { //iterate 
+            probe=(probe+1)%size;
+            succProbes++;
+        } // <1, 0, -3, 4, 5, 0> 
+    }
+    probes += succProbes; 
+    return probe;
+}
+
+void HashTableLin::insert(int n) 
+/*
+runtime: avg is 1; WC # of elements (n) 
+space: constant unless rehash 
+*/
+{
+    // TODO 
+    int probe = Probe(n);
+    if (probe != -1) {
+        if (double(numKeys+1)/double(size) > maxLoad) {
+            rehash(); 
+            probe = Probe(n); //might move locations 
+        }
+        table[probe] = n; 
+        numKeys++; 
+    } 
+} 
+
+
+void HashTableLin::rehash() 
+/*
+runtime: avg # of elements (n) ; WC is in last for loop, number of elements in old * number of elements in new 
+space: size of old table (adding another big o of n, so not changing overall space) 
+*/
+{
+    // TODO 
+    std::vector<int> copy(table); 
+    //HashTableLin replace(2*size, maxLoad); 
+    size = 2 * size; 
+    while (isPrime(size) == false) {
+        size++;
+    } 
+    //std::cout << "Size after rehash is: " << size << std::endl;
+    table.resize(size, 0); //brand new resized table 
+    for (int i = 0; i < copy.size(); i++) {
+        table[i] = 0; 
+    }
+    numKeys = 0; 
+    probes = 0; 
+    for (int i = 0; i < copy.size(); i++) {
+        if (copy[i] != 0) { //if the entry exists 
+           insert(copy[i]);
+        } 
+    } 
+}
+
+bool HashTableLin::isIn(int n)
+/*
+runtime: avg is 1; WC # of elements
+space: constant
+*/
+{
+    // TODO, change following code after completing this function
+    int probe = n % size; 
+    while (table[probe] != 0) {
+        if (table[probe] == n) {
+            return true; 
+        } 
+        else{
+            probe = (probe + 1) % size; 
+        }
+    }
+    return false;
+} 
+
+void HashTableLin::printKeys() 
+/*
+runtime: avg is n
+space: constant
+*/
+{
+    // TODO 
+    for (int i = 0; i < size; i++) {
+        std::cout << table[i] << std::endl; 
+    }
+}
+
+void HashTableLin::printKeysAndIndexes() 
+/*
+runtime: avg is n
+space: constant
+*/
+{
+    // TODO 
+    for (int i = 0; i < size; i++) {
+        std::cout << i << ", " << table[i] << std::endl;
+    }
+}
+
+int HashTableLin::getNumKeys() {
+	// TODO, change following code after completing this function
+    return numKeys;
+}
+
+int HashTableLin::getTableSize() {
+	// TODO, change following code after completing this function
+    return size;
+}
+
+double HashTableLin::getMaxLoadFactor() {
+	// TODO, change following code after completing this function
+    return maxLoad;
+}
+
+std::vector<double> HashTableLin::simProbeSuccess()
+{
+    
+    vector<double> result(9);
+    double total = 0; 
+    const int totalKeys = 1000;
+    for (int i = 1; i <= 9; i++) {
+        total = 0; 
+        //std::cout << i << std::endl;
+        double loadFact = double(double(i)/10.0);
+        for (int run = 0; run < 100; run++) {
+            //std::cout << "run" << std::endl; 
+            HashTableLin HT(totalKeys, loadFact); //makes vector with enough room 
+            while (HT.numKeys < totalKeys) {
+                HT.insert((rand()+1) * (rand()+1));
+            }
+            total += double(HT.probes); 
+        } 
+        result[i - 1] = ((total / 100.0) / double(totalKeys));   
+    }
+    return result;
+}
+
+// for bonus
+std::vector<double> HashTableLin::simProbeUnsuccess()
+{
+    // TODO, change following code after completing this function
+    vector<double> result(9);
+    return result;
+}
